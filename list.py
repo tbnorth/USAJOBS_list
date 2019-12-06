@@ -39,6 +39,8 @@ TLF = [
     'PositionID',
 ]
 
+DTF = ['ApplyOnlineUrl', 'LowGrade', 'HighGrade', 'PromotionPotential']
+
 
 def make_parser():
     """Create command line argument parser"""
@@ -112,15 +114,14 @@ def parse_data(opt):
     """
     data = json.load(open(opt.filename))
     # first yield field names
-    yield ['MatchedObjectId'] + TLF + ['ApplyOnlineUrl']
+    yield ['MatchedObjectId'] + TLF + DTF
     for item in data['SearchResult']['SearchResultItems']:
         yield (
             [item['MatchedObjectId']]
             + [item['MatchedObjectDescriptor'][f] for f in TLF]
             + [
-                item['MatchedObjectDescriptor']['UserArea']['Details'][
-                    'ApplyOnlineUrl'
-                ]
+                item['MatchedObjectDescriptor']['UserArea']['Details'][f]
+                for f in DTF
             ]
         )
 
