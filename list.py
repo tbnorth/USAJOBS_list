@@ -10,8 +10,6 @@ Fairly trivial.
    https://data.usajobs.gov/api/codelist/agencysubelements
    save and peruse that file for codes, ';' separated EPA codes used below
  - would need to handle pagination for more than 500 results
- - NOTE: this code returns fewer results than the corresponding interactive
-   search, no immediately obvious reason
 
 Usage:
 
@@ -25,11 +23,11 @@ creates a corresponding .csv file.
 
 Terry N. Brown terrynbrown@gmail.gov Sat Nov 16 22:42:43 UTC 2019
 """
+import argparse
 import csv
 import json
 import os
 import requests
-import argparse
 
 # fields from grab from MatchedObjectDescriptor
 TLF = [
@@ -90,7 +88,7 @@ def get_data(opt):
     """
     url = (
         "https://data.usajobs.gov/api/Search?"
-        "ResultsPerPage=500&Organization=EP00;EPJF;EPR1"
+        "ResultsPerPage=500&Organization=EP00;EPJF;EPR1&WhoMayApply=All"
     )
     request = requests.get(
         url,
