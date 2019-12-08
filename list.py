@@ -19,7 +19,7 @@ gets current results, then
 
   python list.py --parse 20191115.json
 
-creates a corresponding .csv file.
+creates a corresponding .csv and .html file.
 
 Terry N. Brown terrynbrown@gmail.gov Sat Nov 16 22:42:43 UTC 2019
 """
@@ -28,6 +28,8 @@ import csv
 import json
 import os
 import requests
+from lxml import etree
+from lxml.builder import E
 
 # fields from grab from MatchedObjectDescriptor
 TLF = [
@@ -126,15 +128,46 @@ def parse_data(opt):
         )
 
 
+def url(text):
+    """<a href='{text}'>link</a> if text starts with http, else text"""
+    return (
+        E.a("link", href=text, target='_blank')
+        if text.startswith('http')
+        else text
+    )
+
+
 def main():
+    """Fetch data and save JSON or parse JSON to CSV / HTML with --parse flag
+    """
     opt = get_options()
     if opt.parse:
+        rows = parse_data(opt)
+        hdr = next(rows)
+        rows = list(rows)
+        # save as CSV
         with open(
             opt.filename.replace('.json', '.csv'), 'w', newline=''
         ) as out:
             writer = csv.writer(out)
-            writer.writerows(parse_data(opt))
+            writer.writerow(hdr)
+            writer.writerows(rows)
+        # save as HTML table
+        with open(opt.filename.replace('.json', '.html'), 'w') as out:
+            table = E.table()
+            html = E.html(E.body(table))
+            # header row
+            table.append(E.tr(*[E.th(i) for i in hdr]))
+            start = hdr.index('PublicationStartDate')
+            rows.sort(key=lambda x: x[start], reverse=True)
+            for row in rows:
+                # convert ID number column to link address
+                row[0] = "https://www.usajobs.gov/GetJob/ViewDetails/" + row[0]
+                table.append(E.tr(*[E.td(url(i)) for i in row]))
+            out.write(etree.tostring(html, pretty_print=True).decode('utf-8'))
+
     else:
+        # fetch data to JSON
         with open(opt.filename, 'w') as out:
             json.dump(get_data(opt), out, indent=4)
 
